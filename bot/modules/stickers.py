@@ -1,24 +1,19 @@
-import os
-import re
 import math
-import requests
+import os
 import urllib.request as urllib
 from PIL import Image
 from html import escape
-from bs4 import BeautifulSoup as bs
 
+from bot.helper.telegram_helper.filters import CustomFilters
 from telegram import ParseMode, InlineKeyboardMarkup, InlineKeyboardButton
-from telegram import TelegramError, Update
-from telegram.ext import run_async, CallbackContext, CommandHandler
+from telegram import TelegramError
+from telegram.ext import CommandHandler
 from telegram.utils.helpers import mention_html
 
 from bot import dispatcher, IMAGE_URL
 
-combot_stickers_url = "https://combot.org/telegram/stickers?q="
 
-
-@run_async
-def stickerid(update: Update, context: CallbackContext):
+def stickerid(update, context):
     msg = update.effective_message
     if msg.reply_to_message and msg.reply_to_message.sticker:
         update.effective_message.reply_text(
@@ -37,28 +32,7 @@ def stickerid(update: Update, context: CallbackContext):
         )
 
 
-@run_async
-def cb_sticker(update: Update, context: CallbackContext):
-    msg = update.effective_message
-    split = msg.text.split(' ', 1)
-    if len(split) == 1:
-        msg.reply_text('Provide some name to search for pack.')
-        return
-    text = requests.get(combot_stickers_url + split[1]).text
-    soup = bs(text, 'lxml')
-    results = soup.find_all("a", {'class': "sticker-pack__btn"})
-    titles = soup.find_all("div", "sticker-pack__title")
-    if not results:
-        msg.reply_text('No results found :(.')
-        return
-    reply = f"Stickers for *{split[1]}*:"
-    for result, title in zip(results, titles):
-        link = result['href']
-        reply += f"\n• [{title.get_text()}]({link})"
-    msg.reply_text(reply, parse_mode=ParseMode.MARKDOWN)
-
-
-def getsticker(update: Update, context: CallbackContext):
+def getsticker(update, context):
     bot = context.bot
     msg = update.effective_message
     chat_id = update.effective_chat.id
@@ -73,8 +47,7 @@ def getsticker(update: Update, context: CallbackContext):
             "Please reply to a sticker for me to upload its PNG.")
 
 
-@run_async
-def kang(update: Update, context: CallbackContext):
+def kang(update, context):
     msg = update.effective_message
     user = update.effective_user
     args = context.args
@@ -355,21 +328,6 @@ def kang(update: Update, context: CallbackContext):
         os.remove("kangsticker.tgs")
 
 
-@run_async
-def delsticker(update, context):
-    msg = update.effective_message
-    if msg.reply_to_message and msg.reply_to_message.sticker:
-        file_id = msg.reply_to_message.sticker.file_id
-        context.bot.delete_sticker_from_set(file_id)
-        msg.reply_text(
-            "Deleted!"
-        )
-    else:
-        update.effective_message.reply_text(
-            "Please reply to sticker message to del sticker"
-        )
-
-
 def makepack_internal(
     update,
     context,
@@ -438,26 +396,36 @@ def makepack_internal(
             "Failed to create sticker pack. Possibly due to blek mejik.")
 
 
-@run_async
+def delsticker(update, context):
+    msg = update.effective_message
+    if msg.reply_to_message and msg.reply_to_message.sticker:
+        file_id = msg.reply_to_message.sticker.file_id
+        context.bot.delete_sticker_from_set(file_id)
+        msg.reply_text(
+            "Sticker deleted!"
+        )
+    else:
+        update.effective_message.reply_text(
+            "Please reply to sticker message to del sticker"
+        )
+
+
 def stickhelp(update, context):
     help_string = '''
-• `/stickerid`*:* Reply to a sticker to me to tell you its file ID.
-• `/getsticker`*:* Reply to a sticker to me to upload its raw PNG file.
-• `/kang`*:* Reply to a sticker to add it to your pack.
-• `/remove`*:* Replay to a sticker to remove sticker from an existing pack.
-• `/stickers`*:* Find stickers for given term on combot sticker catalogue.
+• `/stickerid`*:* Reply to a Sticker to me to tell you its file ID.
+• `/getsticker`*:* Reply to a Sticker to me to upload its raw PNG file.
+• `/kang`*:* Reply to a Sticker to add it to your pack.
+• `/remove`*:* Replay to a Sticker to remove Sticker from an existing pack.
 '''
     update.effective_message.reply_photo(IMAGE_URL, help_string, parse_mode=ParseMode.MARKDOWN)
 
-STICKERID_HANDLER = CommandHandler("stickerid", stickerid)
-GETSTICKER_HANDLER = CommandHandler("getsticker", getsticker)
-KANG_HANDLER = CommandHandler("kang", kang)
-DEL_HANDLER = CommandHandler("remove", delsticker)
-STICKERS_HANDLER = CommandHandler("stickers", cb_sticker)
-STICKHELP_HANDLER = CommandHandler("stickerhelp", stickhelp)
+STICKERID_HANDLER = CommandHandler("stickerid", stickerid, filters=CustomFilters.authorized_chat | CustomFilters.authorized_user, run_async=True)
+GETSTICKER_HANDLER = CommandHandler("getsticker", getsticker, filters=CustomFilters.authorized_chat | CustomFilters.authorized_user, run_async=True)
+KANG_HANDLER = CommandHandler("kang", kang, filters=CustomFilters.authorized_chat | CustomFilters.authorized_user, run_async=True)
+DEL_HANDLER = CommandHandler("remove", delsticker, filters=CustomFilters.authorized_chat | CustomFilters.authorized_user, run_async=True)
+STICKHELP_HANDLER = CommandHandler("stickerhelp", stickhelp, filters=CustomFilters.authorized_chat | CustomFilters.authorized_user, run_async=True)
 
 
-dispatcher.add_handler(STICKERS_HANDLER)
 dispatcher.add_handler(STICKERID_HANDLER)
 dispatcher.add_handler(GETSTICKER_HANDLER)
 dispatcher.add_handler(KANG_HANDLER)

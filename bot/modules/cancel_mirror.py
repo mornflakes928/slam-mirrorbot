@@ -1,4 +1,4 @@
-from telegram.ext import CommandHandler, run_async
+from telegram.ext import CommandHandler
 
 from bot import download_dict, dispatcher, download_dict_lock, DOWNLOAD_DIR
 from bot.helper.ext_utils.fs_utils import clean_download
@@ -10,7 +10,6 @@ from time import sleep
 from bot.helper.ext_utils.bot_utils import getDownloadByGid, MirrorStatus
 
 
-@run_async
 def cancel_mirror(update, context):
     args = update.message.text.split(" ", maxsplit=1)
     mirror_message = None
@@ -33,21 +32,21 @@ def cancel_mirror(update, context):
             if BotCommands.MirrorCommand in update.message.text or \
                BotCommands.TarMirrorCommand in update.message.text or \
                BotCommands.UnzipMirrorCommand in update.message.text:
-                msg = "Mirror Already Have Been Cancelled"
+                msg = "Mirror already have been cancelled"
                 sendMessage(msg, context.bot, update)
                 return
             else:
-                msg = "Please reply to the /mirror message which was used to start the download or /cancel gid to cancel it!"
+                msg = f"Please reply to the /{BotCommands.MirrorCommand} message which was used to start the download or /{BotCommands.CancelMirror} GID to cancel it!"
                 sendMessage(msg, context.bot, update)
                 return
     if dl.status() == "Uploading...📤":
-        sendMessage("Upload in Progress, You Can't Cancel It.", context.bot, update)
+        sendMessage("Upload in Progress, You Can't Cancel it.", context.bot, update)
         return
     elif dl.status() == "Archiving...🔐":
-        sendMessage("Archival in Progress, You Can't Cancel It.", context.bot, update)
+        sendMessage("Archival in Progress, You Can't Cancel it.", context.bot, update)
         return
     elif dl.status() == "Extracting...📂":
-        sendMessage("Extract in Progress, You Can't Cancel It.", context.bot, update)
+        sendMessage("Extract in Progress, You Can't Cancel it.", context.bot, update)
         return
     else:
         dl.download().cancel_download()
@@ -55,7 +54,6 @@ def cancel_mirror(update, context):
     clean_download(f'{DOWNLOAD_DIR}{mirror_message.message_id}/')
 
 
-@run_async
 def cancel_all(update, context):
     with download_dict_lock:
         count = 0
@@ -69,8 +67,8 @@ def cancel_all(update, context):
 
 
 cancel_mirror_handler = CommandHandler(BotCommands.CancelMirror, cancel_mirror,
-                                       filters=(CustomFilters.authorized_chat | CustomFilters.authorized_user) & CustomFilters.mirror_owner_filter)
+                                       filters=(CustomFilters.authorized_chat | CustomFilters.authorized_user) & CustomFilters.mirror_owner_filter | CustomFilters.sudo_user, run_async=True)
 cancel_all_handler = CommandHandler(BotCommands.CancelAllCommand, cancel_all,
-                                    filters=CustomFilters.owner_filter)
+                                    filters=CustomFilters.owner_filter | CustomFilters.sudo_user, run_async=True)
 dispatcher.add_handler(cancel_all_handler)
 dispatcher.add_handler(cancel_mirror_handler)
