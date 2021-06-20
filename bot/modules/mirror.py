@@ -322,7 +322,7 @@ def _mirror(bot, update, isTar=False, extract=False):
     elif bot_utils.is_mega_link(link):
         link_type = get_mega_link_type(link)
         if link_type == "folder" and BLOCK_MEGA_FOLDER:
-            sendMessage("Mega folder are blocked!", bot, update)
+            sendMessage("Mega folder tidak bisa digunakan, alternatifnya silahkan mirror mega file atau gunakan direct link racaty di pahe", bot, update)
         elif BLOCK_MEGA_LINKS:
             sendMessage("Mega links are blocked!", bot, update)
         else:
