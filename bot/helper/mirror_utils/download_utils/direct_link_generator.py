@@ -42,8 +42,10 @@ def direct_link_generator(link: str):
         return cm_ru(link)
     elif 'mediafire.com' in link:
         return mediafire(link)
+    elif '1fichier.com' in link:
+        raise DirectDownloadLinkException(f"ERROR: 1fichier tidak bisa digunakan, alternatifnya gunakan mirror mega file / mirror racaty.")
     elif 'uptobox.com' in link:
-        raise DirectDownloadLinkException(f"ERROR: Mohon maaf, Uptobox tidak support karena admin belum mempunyai key. Silahkan berdonasi key UTB agar bisa digunakan.")
+        raise DirectDownloadLinkException(f"ERROR: Mohon maaf, Uptobox tidak support karena admin belum mempunyai key. Silahkan berdonasi key UTB agar bisa digunakan atau gunakan mirror mega file/ mirror racaty.")
     elif 'osdn.net' in link:
         return osdn(link)
     elif 'github.com' in link:
